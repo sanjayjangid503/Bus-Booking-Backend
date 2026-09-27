@@ -1,13 +1,9 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt"
+import type { IUser } from "../types/auth.types.js";
 
-interface User {
-    name: string;
-    email: string;
-    password: string
-}
 
-const userSchema = new Schema<User>({
+const userSchema = new Schema<IUser>({
     name: {
         type: String,
         required: true,
@@ -25,7 +21,7 @@ const userSchema = new Schema<User>({
     password: {
         type: String,
         required: true,
-        select: true
+        select: false
     }
 }, { timestamps: true })
 
@@ -35,9 +31,9 @@ userSchema.pre("save", async function() {
     this.password = await bcrypt.hash(this.password, 12)
 } )
 
-const UserModel = mongoose.model<User>("User", userSchema)
+const User = mongoose.model<IUser>("User", userSchema)
 
 
-export default UserModel
+export default User
 
 
