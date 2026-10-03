@@ -67,69 +67,63 @@ const buses = [
 const seedData = async () => {
     try {
         await connectDB()
-        const routeMap = new Map<string, mongoose.Types.ObjectId>();
-        for (const routeData of routes) {
+        const routeMap = new Map<string, mongoose.Types.ObjectId>()
+        for(const routesData of routes) {
             const route = await Route.findOneAndUpdate(
                 {
-                    from: routeData.from,
-                    to: routeData.to
+                    from: routesData.from,
+                    to: routesData.to
                 },
                 {
-                    $set: routeData,
-                    $setOnInsert: { stops: [] },
+                    $set: routesData,
+                    $setOnInsert: {stopes: []}
                 },
                 {
                     new: true,
                     upsert: true,
-                    runValidators: true,
+                    runValidators: true
                 }
-            );
+            )
 
-            routeMap.set(`${routeData.from}-${routeData.to}`, route._id)
+            routeMap.set(`${routesData.from}-${routesData.to}`, route._id)
         }
 
-        console.log("Routes seeded successfully");
+        console.log("Route seeded successfully")
 
-        // 2. Create or update buses
-        for (const busData of buses) {
-            const routeId = routeMap.get(
-                `${busData.from}-${busData.to}`
-            );
-
-            if (!routeId) {
-                throw new Error(
-                    `Route not found: ${busData.from} to ${busData.to}`
-                );
+        for(const busData of buses) {
+            const routeId = routeMap.get(`${busData.from}-${busData.to}`);
+            if(!routeId) {
+                throw new Error(`Route not found: ${busData.from} to ${busData.to}`)
             }
 
             await Bus.findOneAndUpdate(
-                { busNumber: busData.busNumber },
+                {
+                    busNumber: busData.busNumber
+                },
                 {
                     $set: {
                         operator: busData.operator,
                         busType: busData.busType,
                         totalSeats: busData.totalSeats,
                         seatLayout,
-                        route: routeId,
-                    },
+                        route: routeId
+                    }
                 },
                 {
                     new: true,
                     upsert: true,
-                    runValidators: true,
+                    runValidators: true
                 }
-            );
+            )
         }
 
         console.log("Buses seeded successfully");
         console.log("Seed completed successfully");
-
     } catch (error) {
         console.error("Error seeding data:", error);
         process.exitCode = 1;
-
     } finally {
-        await mongoose.disconnect()
+         await mongoose.disconnect()
     }
 }
 
