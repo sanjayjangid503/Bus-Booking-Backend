@@ -1,5 +1,6 @@
 import Bus from "../models/Bus.model.js";
 import Route from "../models/Route.model.js";
+import seatReservation from "../models/seatReservation.model.js";
 import type { BusSearchQuery, BusType } from "../types/bus.types.js"
 
 export const busSearchService = async (query: BusSearchQuery) => {
@@ -76,4 +77,35 @@ export const getBusService = async (params: any) => {
     const id = params.id
     const buses = await Bus.findById(id).populate("route")
     return buses
+}
+
+export const getSeatService = async (busId: any, date: string ) => {
+    const bus = await Bus.findById(busId)
+    if(!bus) {
+        throw new Error("Bus not found")
+    }
+    const reservation = await seatReservation.find({
+        bus: busId,
+        travelDate: new Date(date)
+    })
+
+    const reservationMap = new Map();
+    reservation.forEach((reservation) => {
+        reservationMap.set(
+            reservation.seatNumber,
+            reservation.status
+        )
+    })
+
+    const seats = bus.seatLayout
+        .flat()
+        .filter((seat: any) => seat !== "")
+        .map((seat: any) => ({
+            seatNumber: seat,
+            price: 850,
+            status: reservationMap.get(seat) ?? 'AVAILABLE'
+        }));
+
+    return seats
+
 }
