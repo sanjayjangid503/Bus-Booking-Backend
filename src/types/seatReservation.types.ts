@@ -9,6 +9,6 @@ export interface ISeatReservation {
     seatNumber: string;
     status: SeatStatus;
     user?: Types.ObjectId;
-    locketAt?: Date;
+    lockedAt?: Date;
     lockExpiresAt?: Date;
 }

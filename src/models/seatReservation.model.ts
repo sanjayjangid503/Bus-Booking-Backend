@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import type { ISeatReservation } from "../types/seatReservation.types.js";
 
-const seatSchema = new Schema<ISeatReservation>({
+const seatReservationSchema = new Schema<ISeatReservation>({
     bus: {
         type: Schema.Types.ObjectId,
         ref: "Bus",
@@ -33,7 +33,7 @@ const seatSchema = new Schema<ISeatReservation>({
         ref: "User",
     },
 
-    locketAt: {
+    lockedAt: {
         type: Date,
     },
 
@@ -42,6 +42,16 @@ const seatSchema = new Schema<ISeatReservation>({
     }
 }, {timestamps: true})
 
-const seatReservation = model<ISeatReservation>("SeatReservation", seatSchema)
+seatReservationSchema.index(
+    {
+        bus: 1,
+        travelDate: 1,
+        seatNumber: 1
+    },
+    {
+       unique: true 
+    }
+)
+const seatReservation = model<ISeatReservation>("SeatReservation", seatReservationSchema)
 
 export default seatReservation

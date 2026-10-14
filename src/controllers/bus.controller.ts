@@ -1,6 +1,6 @@
 import type {Request, Response} from "express"
 import type { BusSearchQuery } from "../types/bus.types.js";
-import { busSearchService, getBusService, getSeatService } from "../services/bus.service.js";
+import { busSearchService, getBusService, getSeatService, lockSeatsService } from "../services/bus.service.js";
 import { HTTP_STATUS } from "../constants/httpCodes.js";
 
 export const searchBusController = async (req: Request<{}, {}, {}, BusSearchQuery>, res: Response) => {
@@ -55,5 +55,59 @@ export const getSeatController = async (req: Request, res: Response) => {
             message: "Failed to get bus seats", error,
         });
 
+    }
+}
+
+export const lockSeatController = async(req: Request, res: Response) => {
+    try {
+        const {id} = req.params
+        const { travelDate, seats } = req.body
+
+        if (
+            typeof travelDate !== "string" ||
+            !Array.isArray(seats) ||
+            !seats.every((seat: unknown) => typeof seat === "string")
+        ) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: "travelDate and seats are required",
+            });
+        }
+
+        const userId = req.userId
+        const lockSeats = await lockSeatsService(
+            id, 
+            travelDate,
+            seats, 
+            userId
+        )
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: "Seats locked successfully for 5 minutes",
+            data: lockSeats,
+        });
+
+    } catch (error) {
+        const message =
+            error instanceof Error ? error.message : "Internal server error";
+
+        const status = [
+            "Invalid bus ID",
+            "Invalid user ID",
+            "Invalid travel date; use YYYY-MM-DD",
+            "Provide unique, valid seat numbers",
+            "Bus not found",
+            "One or more seats do not exist on this bus",
+        ].includes(message)
+            ? HTTP_STATUS.BAD_REQUEST
+            : message.startsWith("Seat ")
+                ? HTTP_STATUS.UNAUTHORIZED
+                : HTTP_STATUS.INTERNAL_SERVER_ERROR;
+
+        return res.status(status).json({
+            success: false,
+            message,
+        });
     }
 }
